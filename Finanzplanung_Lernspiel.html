@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Finanzplanung – Lernspiel</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Nunito+Sans:wght@400;600&display=swap');
+
+  :root {
+    --bg:        #F0F4FF;
+    --card:      #FFFFFF;
+    --primary:   #3B5BDB;
+    --primary-l: #E7ECFF;
+    --accent:    #F59E0B;
+    --accent-l:  #FEF3C7;
+    --green:     #10B981;
+    --green-l:   #D1FAE5;
+    --red:       #EF4444;
+    --red-l:     #FEE2E2;
+    --text:      #1E293B;
+    --muted:     #64748B;
+    --border:    #CBD5E1;
+    --radius:    14px;
+    --shadow:    0 4px 24px rgba(59,91,219,.10);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Nunito Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 0 0 48px;
+  }
+
+  /* ── Header ── */
+  header {
+    background: var(--primary);
+    color: #fff;
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    box-shadow: 0 2px 12px rgba(0,0,0,.15);
+  }
+  header .icon { font-size: 2rem; }
+  header h1 { font-family: 'Nunito', sans-serif; font-size: 1.35rem; font-weight: 800; letter-spacing: -.5px; }
+  header p  { font-size: .85rem; opacity: .85; margin-top: 2px; }
+
+  /* ── Progress bar ── */
+  #progress-wrap {
+    background: rgba(255,255,255,.2);
+    border-radius: 4px;
+    height: 6px;
+    width: 180px;
+    margin-left: auto;
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+  #progress-bar {
+    background: var(--accent);
+    height: 100%;
+    border-radius: 4px;
+    transition: width .4s ease;
+  }
+  #step-label { font-size: .78rem; opacity: .9; text-align: right; margin-top: 4px; }
+
+  /* ── Station tabs ── */
+  #tabs {
+    display: flex;
+    gap: 0;
+    background: #fff;
+    border-bottom: 2px solid var(--border);
+    overflow-x: auto;
+    padding: 0 24px;
+  }
+  .tab-btn {
+    font-family: 'Nunito', sans-serif;
+    font-weight: 700;
+    font-size: .82rem;
+    padding: 12px 18px;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -2px;
+    transition: color .2s, border-color .2s;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
+  .tab-btn .badge {
+    width: 22px; height: 22px; border-radius: 50%;
+    background: var(--primary-l); color: var(--primary);
+    font-size: .72rem; display: flex; align-items: center; justify-content: center;
+    font-weight: 800;
+  }
+  .tab-btn.done .badge { background: var(--green-l); color: var(--green); }
+  .tab-btn.active .badge { background: var(--primary); color: #fff; }
+
+  /* ── Main content ── */
+  main { max-width: 820px; margin: 0 auto; padding: 32px 20px 0; }
+
+  .station { display: none; }
+  .station.active { display: block; }
+
+  /* ── Card ── */
+  .card {
+    background: var(--card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 28px 32px;
+    margin-bottom: 24px;
+  }
+
+  /* ── AFB badge ── */
+  .afb-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: .73rem; font-weight: 800; letter-spacing: .5px;
+    padding: 3px 10px; border-radius: 20px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  .afb1 { background: #EFF6FF; color: #3B82F6; }
+  .afb2 { background: #FEF3C7; color: #D97706; }
+  .afb3 { background: #F0FDF4; color: #16A34A; }
+
+  /* ── Station title ── */
+  .station-title {
+    font-family: 'Nunito', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+  .station-sub {
+    font-size: .92rem; color: var(--muted);
+    margin-bottom: 24px;
+    line-height: 1.5;
+  }
+
+  /* ── Glossary ── */
+  .glossary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 24px; }
+  @media(max-width:560px){ .glossary-grid { grid-template-columns: 1fr; } }
+
+  .glossary-card {
+    background: var(--primary-l);
+    border-radius: 10px;
+    padding: 16px 18px;
+    border-left: 4px solid var(--primary);
+  }
+  .glossary-card.green { background: var(--green-l); border-left-color: var(--green); }
+  .glossary-card.amber { background: var(--accent-l); border-left-color: var(--accent); }
+  .glossary-card h3 { font-family:'Nunito',sans-serif; font-weight: 800; font-size: 1rem; margin-bottom: 5px; }
+  .glossary-card p  { font-size: .88rem; line-height: 1.5; color: var(--text); }
+
+  /* ── Drag-drop sorting ── */
+  .sort-container { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
+  .sort-zone {
+    flex: 1; min-width: 180px;
+    border: 2px dashed var(--border);
+    border-radius: 10px;
+    padding: 12px;
+    min-height: 120px;
+    background: #f8fafc;
+  }
+  .sort-zone h4 {
+    font-family:'Nunito',sans-serif; font-weight:800; font-size:.88rem;
+    text-align:center; margin-bottom:10px; color: var(--muted);
+  }
+  .sort-zone.einnahmen { border-color:#10B981; background:#f0fdf4; }
+  .sort-zone.einnahmen h4 { color: var(--green); }
+  .sort-zone.ausgaben  { border-color:#EF4444; background:#fef2f2; }
+  .sort-zone.ausgaben  h4 { color: var(--red); }
+
+  .drag-chip {
+    display: inline-block;
+    background: #fff;
+    border: 1.5px solid var(--border);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: .85rem;
+    font-weight: 600;
+    cursor: grab;
+    margin: 4px;
+    transition: transform .15s, box-shadow .15s;
+    user-select: none;
+  }
+  .drag-chip:active { cursor: grabbing; transform: scale(1.06); box-shadow: 0 4px 12px rgba(0,0,0,.15); }
+  .drag-chip.correct { background: var(--green-l); border-color: var(--green); color: #065f46; }
+  .drag-chip.wrong   { background: var(--red-l);   border-color: var(--red);   color: #7f1d1d; }
+
+  .chips-pool { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+
+  /* ── Quiz questions ── */
+  .question-block { margin-bottom: 28px; }
+  .question-block p.q-text {
+    font-weight: 700; font-size: 1rem; margin-bottom: 12px;
+    line-height: 1.5;
+  }
+  .options { display: flex; flex-direction: column; gap: 8px; }
+  .option-btn {
+    padding: 10px 16px;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    background: #fff;
+    text-align: left;
+    font-size: .9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color .2s, background .2s;
+    font-family: 'Nunito Sans', sans-serif;
+  }
+  .option-btn:hover:not(:disabled) { border-color: var(--primary); background: var(--primary-l); }
+  .option-btn.correct { background: var(--green-l); border-color: var(--green); color: #065f46; }
+  .option-btn.wrong   { background: var(--red-l);   border-color: var(--red);   color: #7f1d1d; }
+  .option-btn:disabled { cursor: default; }
+
+  .feedback-msg {
+    padding: 10px 14px; border-radius: 8px; font-size: .88rem; font-weight: 600;
+    margin-top: 8px; display: none;
+  }
+  .feedback-msg.show { display: block; }
+  .feedback-msg.ok  { background: var(--green-l); color: #065f46; }
+  .feedback-msg.err { background: var(--red-l); color: #7f1d1d; }
+
+  /* ── Number input ── */
+  .number-input-row {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 10px;
+  }
+  .number-input-row label { font-size: .9rem; font-weight: 600; flex: 1; }
+  .number-input-row input {
+    width: 90px; padding: 8px 10px; border: 2px solid var(--border);
+    border-radius: 8px; font-size: 1rem; font-weight: 700; text-align: right;
+    font-family: 'Nunito', sans-serif;
+  }
+  .number-input-row span { font-size: .9rem; font-weight: 600; color: var(--muted); }
+
+  .result-box {
+    background: var(--primary-l); border-radius: 10px; padding: 14px 18px;
+    font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 1.05rem;
+    color: var(--primary); margin-top: 12px; display: flex; justify-content:space-between;
+    align-items: center;
+  }
+  .result-box.green { background: var(--green-l); color: #065f46; }
+  .result-box.red   { background: var(--red-l);   color: #991b1b; }
+
+  /* ── Tabelle ── */
+  .data-table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+  .data-table th {
+    background: var(--primary); color: #fff;
+    padding: 10px 14px; text-align: left;
+    font-family: 'Nunito', sans-serif; font-weight: 800;
+  }
+  .data-table td { padding: 9px 14px; border-bottom: 1px solid var(--border); }
+  .data-table tbody tr:hover { background: var(--primary-l); }
+  .data-table input {
+    width: 100%; border: none; background: transparent;
+    font-family: 'Nunito', sans-serif; font-weight: 700; font-size: .9rem;
+    color: var(--text); outline: none;
+  }
+  .data-table input:focus { border-bottom: 2px solid var(--primary); }
+
+  /* ── Scenario info box ── */
+  .scenario-box {
+    background: linear-gradient(135deg, var(--primary-l) 0%, #EEF2FF 100%);
+    border: 1.5px solid #C7D2FE;
+    border-radius: 12px;
+    padding: 18px 22px;
+    margin-bottom: 22px;
+    font-size: .92rem;
+    line-height: 1.65;
+  }
+  .scenario-box strong { color: var(--primary); }
+  .scenario-box h4 {
+    font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 1rem;
+    margin-bottom: 8px; color: var(--primary);
+    display: flex; align-items: center; gap: 8px;
+  }
+
+  /* ── Buttons ── */
+  .btn {
+    font-family: 'Nunito', sans-serif; font-weight: 800;
+    padding: 12px 24px; border-radius: 10px;
+    border: none; cursor: pointer; font-size: .95rem;
+    transition: transform .1s, box-shadow .2s;
+  }
+  .btn:active { transform: scale(.97); }
+  .btn-primary { background: var(--primary); color: #fff; box-shadow: 0 4px 14px rgba(59,91,219,.3); }
+  .btn-primary:hover { box-shadow: 0 6px 20px rgba(59,91,219,.4); }
+  .btn-secondary { background: #fff; color: var(--primary); border: 2px solid var(--primary); }
+  .btn-accent { background: var(--accent); color: #fff; box-shadow: 0 4px 14px rgba(245,158,11,.3); }
+
+  .btn-row { display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; margin-top: 16px; }
+
+  /* ── Navigation ── */
+  #nav-bar {
+    display: flex; justify-content: space-between; align-items: center;
+    max-width: 820px; margin: 8px auto 0; padding: 0 20px;
+  }
+
+  /* ── Success screen ── */
+  #success-screen {
+    display: none;
+    text-align: center; padding: 60px 20px;
+  }
+  #success-screen .trophy { font-size: 5rem; margin-bottom: 16px; }
+  #success-screen h2 { font-family: 'Nunito',sans-serif; font-size: 2rem; font-weight: 800; margin-bottom: 12px; }
+  #success-screen p  { font-size: 1.05rem; color: var(--muted); max-width: 480px; margin: 0 auto 32px; }
+
+  /* ── Hint toggle ── */
+  .hint-btn {
+    background: var(--accent-l); color: #92400E; border: 1.5px solid #FCD34D;
+    border-radius: 8px; padding: 6px 14px; font-size: .8rem; font-weight: 700;
+    cursor: pointer; margin-bottom: 14px;
+  }
+  .hint-box {
+    background: var(--accent-l); border: 1.5px solid #FCD34D;
+    border-radius: 8px; padding: 12px 16px;
+    font-size: .85rem; line-height: 1.55; margin-bottom: 16px;
+    display: none;
+  }
+  .hint-box.show { display: block; }
+
+  /* ── Budget live calc ── */
+  .calc-section { border-top: 2px solid var(--border); margin-top: 16px; padding-top: 16px; }
+  .calc-row {
+    display: flex; justify-content: space-between;
+    font-size: .9rem; padding: 4px 0;
+  }
+  .calc-row.total {
+    font-family: 'Nunito', sans-serif; font-weight: 800; font-size: 1rem;
+    border-top: 1.5px solid var(--border); padding-top: 8px; margin-top: 4px;
+  }
+
+  /* ── Sparziel-Planer ── */
+  .sparziel-row { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; flex-wrap: wrap; }
+  .sparziel-row label { font-size: .85rem; font-weight: 600; min-width: 100px; }
+  .sparziel-row input[type="number"], .sparziel-row input[type="text"] {
+    padding: 7px 10px; border: 2px solid var(--border); border-radius: 8px;
+    font-family: 'Nunito', sans-serif; font-weight: 700; font-size: .9rem; width: 110px;
+  }
+  .sparziel-row .per-month {
+    background: var(--primary-l); border-radius: 8px; padding: 7px 12px;
+    font-weight: 800; font-size: .88rem; color: var(--primary); min-width: 80px;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="icon">💶</div>
+  <div>
+    <h1>Finanzplanung – Lernspiel</h1>
+    <p>WP/WA · Klasse 7/8 · Einnahmen, Ausgaben & Budget</p>
+  </div>
+  <div style="margin-left:auto; min-width:150px; text-align:right;">
+    <div id="progress-wrap"><div id="progress-bar" style="width:20%"></div></div>
+    <div id="step-label" style="color:rgba(255,255,255,.85); font-size:.78rem; margin-top:4px;">Station 1 von 5</div>
+  </div>
+</header>
+
+<div id="tabs">
+  <button class="tab-btn active" onclick="goTo(0)"><span class="badge">1</span>Begriffe</button>
+  <button class="tab-btn" onclick="goTo(1)"><span class="badge">2</span>Sortieren</button>
+  <button class="tab-btn" onclick="goTo(2)"><span class="badge">3</span>Annas Budget</button>
+  <button class="tab-btn" onclick="goTo(3)"><span class="badge">4</span>Mein Budget</button>
+  <button class="tab-btn" onclick="goTo(4)"><span class="badge">5</span>Lucas' Plan</button>
+</div>
+
+<main>
+
+<!-- ══════════════════════════════════════════
+     STATION 1 – Begriffe (AFB I)
+══════════════════════════════════════════ -->
+<section class="station active" id="s0">
+  <div class="card">
+    <span class="afb-badge afb1">⬢ AFB I – Wissen</span>
+    <h2 class="station-title">📖 Wichtige Begriffe</h2>
+    <p class="station-sub">Lies die Erklärungen durch. Dann beantworte die Fragen unten.</p>
+
+    <div class="glossary-grid">
+      <div class="glossary-card green">
+        <h3>💰 Einnahmen</h3>
+        <p>Alle Geldbeträge, die du <strong>bekommst</strong>. Zum Beispiel: Taschengeld, Geldgeschenke oder Lohn aus einem kleinen Job.</p>
+      </div>
+      <div class="glossary-card" style="background:#fef2f2;border-left-color:#ef4444;">
+        <h3>🛒 Ausgaben</h3>
+        <p>Alle Geldbeträge, die du <strong>ausgibst</strong>. Zum Beispiel: Einkäufe, Kino, Schulhefte oder Snacks.</p>
+      </div>
+      <div class="glossary-card amber">
+        <h3>📊 Budget</h3>
+        <p>Ein <strong>Plan</strong>, der zeigt, wie viel Geld du hast und wie du es aufteilst – damit du am Ende des Monats nicht mehr ausgibst als du eingenommen hast.</p>
+      </div>
+      <div class="glossary-card">
+        <h3>🎯 Sparziel</h3>
+        <p>Ein Betrag, den du <strong>bewusst zurücklegst</strong>, um etwas Bestimmtes kaufen oder bezahlen zu können – zum Beispiel ein neues Spiel oder einen Ausflug.</p>
+      </div>
+    </div>
+
+    <div id="s0-questions">
+      <!-- Q1 -->
+      <div class="question-block" id="q0-0">
+        <p class="q-text">1. Du bekommst jeden Monat 40 € Taschengeld und 10 € für Babysitten. Was sind das zusammen?</p>
+        <div class="options">
+          <button class="option-btn" onclick="checkOption(this,'wrong','q0-0')">Ausgaben (50 €)</button>
+          <button class="option-btn" onclick="checkOption(this,'correct','q0-0')">Einnahmen (50 €)</button>
+          <button class="option-btn" onclick="checkOption(this,'wrong','q0-0')">Ein Budget</button>
+        </div>
+        <div class="feedback-msg" id="fb-q0-0"></div>
+      </div>
+
+      <!-- Q2 -->
+      <div class="question-block" id="q0-1">
+        <p class="q-text">2. Was ist ein Budget?</p>
+        <div class="options">
+          <button class="option-btn" onclick="checkOption(this,'wrong','q0-1')">Das Geld, das man spart</button>
+          <button class="option-btn" onclick="checkOption(this,'wrong','q0-1')">Ein Kontoauszug der Bank</button>
+          <button class="option-btn" onclick="checkOption(this,'correct','q0-1')">Ein Plan über Einnahmen und Ausgaben</button>
+        </div>
+        <div class="feedback-msg" id="fb-q0-1"></div>
+      </div>
+
+      <!-- Q3 -->
+      <div class="question-block" id="q0-2">
+        <p class="q-text">3. Du gibst 8 € für Snacks aus und sparst 12 € für ein Sparziel. Was sind die 8 €?</p>
+        <div class="options">
+          <button class="option-btn" onclick="checkOption(this,'correct','q0-2')">Ausgaben</button>
+          <button class="option-btn" onclick="checkOption(this,'wrong','q0-2')">Einnahmen</button>
+          <button class="option-btn" onclick="checkOption(this,'wrong','q0-2')">Sparziel</button>
+        </div>
+        <div class="feedback-msg" id="fb-q0-2"></div>
+      </div>
+    </div>
+  </div>
+  <div id="nav-bar"><span></span><button class="btn btn-primary" onclick="goTo(1)">Weiter →</button></div>
+</section>
+
+<!-- ══════════════════════════════════════════
+     STATION 2 – Sortieren (AFB I/II)
+══════════════════════════════════════════ -->
+<section class="station" id="s1">
+  <div class="card">
+    <span class="afb-badge afb1">⬢ AFB I – Zuordnen</span>
+    <h2 class="station-title">🔀 Einnahmen oder Ausgaben?</h2>
+    <p class="station-sub">Ziehe die Karten in die richtige Spalte – oder tippe einfach drauf!</p>
+
+    <div class="chips-pool" id="chips-pool">
+      <div class="drag-chip" draggable="true" data-cat="E" id="chip0" onclick="chipClick('chip0')">🎂 Geburtstagsgeld (15 €)</div>
+      <div class="drag-chip" draggable="true" data-cat="A" id="chip1" onclick="chipClick('chip1')">🍟 Pommes (3 €)</div>
+      <div class="drag-chip" draggable="true" data-cat="E" id="chip2" onclick="chipClick('chip2')">🌿 Rasenmähen (20 €)</div>
+      <div class="drag-chip" draggable="true" data-cat="A" id="chip3" onclick="chipClick('chip3')">🎬 Kino (9 €)</div>
+      <div class="drag-chip" draggable="true" data-cat="E" id="chip4" onclick="chipClick('chip4')">💵 Taschengeld (30 €)</div>
+      <div class="drag-chip" draggable="true" data-cat="A" id="chip5" onclick="chipClick('chip5')">📚 Schulheft (2 €)</div>
+      <div class="drag-chip" draggable="true" data-cat="A" id="chip6" onclick="chipClick('chip6')">🎮 App-Kauf (5 €)</div>
+      <div class="drag-chip" draggable="true" data-cat="E" id="chip7" onclick="chipClick('chip7')">🛒 Spülmaschine einräumen (5 €)</div>
+    </div>
+
+    <div class="sort-container">
+      <div class="sort-zone einnahmen" id="zone-E" ondragover="event.preventDefault()" ondrop="dropChip(event,'E')">
+        <h4>💚 EINNAHMEN</h4>
+      </div>
+      <div class="sort-zone ausgaben" id="zone-A" ondragover="event.preventDefault()" ondrop="dropChip(event,'A')">
+        <h4>🔴 AUSGABEN</h4>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="resetSort()">↺ Zurücksetzen</button>
+      <button class="btn btn-primary" onclick="checkSort()">✓ Auswerten</button>
+    </div>
+    <div class="feedback-msg" id="fb-sort" style="margin-top:10px;"></div>
+  </div>
+  <div id="nav-bar">
+    <button class="btn btn-secondary" onclick="goTo(0)">← Zurück</button>
+    <button class="btn btn-primary" onclick="goTo(2)">Weiter →</button>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════
+     STATION 3 – Annas Budget (AFB II)
+══════════════════════════════════════════ -->
+<section class="station" id="s2">
+  <div class="card">
+    <span class="afb-badge afb2">⬢ AFB II – Anwenden</span>
+    <h2 class="station-title">📋 Annas Budget verstehen</h2>
+    <p class="station-sub">Lies das Beispiel und beantworte die Fragen. Rechne genau!</p>
+
+    <div class="scenario-box">
+      <h4>👧 Das Beispiel</h4>
+      Anna bekommt jeden Monat <strong>20 € Taschengeld</strong>. Sie gibt <strong>10 € für Süßigkeiten</strong> und <strong>5 € für Schulmaterialien</strong> aus. Den Rest spart sie für ein neues Fahrrad.
+    </div>
+
+    <!-- Q1: Einnahmen -->
+    <div class="question-block" id="q2-0">
+      <p class="q-text">1. Wie hoch sind Annas monatliche Einnahmen?</p>
+      <div class="options">
+        <button class="option-btn" onclick="checkOption(this,'wrong','q2-0')">15 €</button>
+        <button class="option-btn" onclick="checkOption(this,'correct','q2-0')">20 €</button>
+        <button class="option-btn" onclick="checkOption(this,'wrong','q2-0')">5 €</button>
+      </div>
+      <div class="feedback-msg" id="fb-q2-0"></div>
+    </div>
+
+    <!-- Q2: Ausgaben -->
+    <div class="question-block" id="q2-1">
+      <p class="q-text">2. Wie viel Geld gibt Anna insgesamt für Süßigkeiten und Schulmaterialien aus?</p>
+      <div class="options">
+        <button class="option-btn" onclick="checkOption(this,'wrong','q2-1')">5 €</button>
+        <button class="option-btn" onclick="checkOption(this,'wrong','q2-1')">10 €</button>
+        <button class="option-btn" onclick="checkOption(this,'correct','q2-1')">15 €</button>
+      </div>
+      <div class="feedback-msg" id="fb-q2-1"></div>
+    </div>
+
+    <!-- Q3: Ersparnisse -->
+    <div class="question-block" id="q2-2">
+      <p class="q-text">3. Wie viel kann Anna jeden Monat sparen?</p>
+      <div class="options">
+        <button class="option-btn" onclick="checkOption(this,'wrong','q2-2')">10 €</button>
+        <button class="option-btn" onclick="checkOption(this,'correct','q2-2')">5 €</button>
+        <button class="option-btn" onclick="checkOption(this,'wrong','q2-2')">20 €</button>
+      </div>
+      <div class="feedback-msg" id="fb-q2-2"></div>
+    </div>
+
+    <!-- Q4: Warum Budget -->
+    <div class="question-block" id="q2-3">
+      <p class="q-text">4. Warum ist es für Anna nützlich, ein Budget zu haben?</p>
+      <div class="options">
+        <button class="option-btn" onclick="checkOption(this,'wrong','q2-3')">Damit sie mehr Geld bekommt</button>
+        <button class="option-btn" onclick="checkOption(this,'correct','q2-3')">Damit sie sieht, wie viel sie hat und gezielt sparen kann</button>
+        <button class="option-btn" onclick="checkOption(this,'wrong','q2-3')">Damit sie gar nichts ausgeben muss</button>
+      </div>
+      <div class="feedback-msg" id="fb-q2-3"></div>
+    </div>
+  </div>
+  <div id="nav-bar">
+    <button class="btn btn-secondary" onclick="goTo(1)">← Zurück</button>
+    <button class="btn btn-primary" onclick="goTo(3)">Weiter →</button>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════
+     STATION 4 – Mein Budget (AFB II)
+══════════════════════════════════════════ -->
+<section class="station" id="s3">
+  <div class="card">
+    <span class="afb-badge afb2">⬢ AFB II – Erstellen</span>
+    <h2 class="station-title">🧮 Mein eigenes Budget</h2>
+    <p class="station-sub">Trage deine eigenen Zahlen ein – das Spiel rechnet automatisch mit.</p>
+
+    <button class="hint-btn" onclick="toggleHint('hint-budget')">💡 Tipp anzeigen</button>
+    <div class="hint-box" id="hint-budget">
+      <strong>So geht's:</strong> Trage zuerst alle Einnahmen ein (z. B. Taschengeld, Geld durch kleine Jobs). Dann trage alle Ausgaben ein. Unten siehst du automatisch, wie viel du sparen kannst.
+    </div>
+
+    <h3 style="font-family:'Nunito',sans-serif;font-weight:800;font-size:1rem;margin-bottom:12px;color:var(--green);">💚 Einnahmen</h3>
+
+    <div class="number-input-row">
+      <label>Taschengeld</label>
+      <input type="number" id="b-taschengeld" value="0" min="0" oninput="calcBudget()"> <span>€</span>
+    </div>
+    <div class="number-input-row">
+      <label>Geldgeschenke</label>
+      <input type="number" id="b-geschenke" value="0" min="0" oninput="calcBudget()"> <span>€</span>
+    </div>
+    <div class="number-input-row">
+      <label>Nebenjob / Sonstiges</label>
+      <input type="number" id="b-job" value="0" min="0" oninput="calcBudget()"> <span>€</span>
+    </div>
+
+    <div class="result-box" id="total-einnahmen">Einnahmen gesamt: <strong>0 €</strong></div>
+
+    <h3 style="font-family:'Nunito',sans-serif;font-weight:800;font-size:1rem;margin:20px 0 12px;color:#EF4444;">🔴 Ausgaben</h3>
+
+    <div class="number-input-row">
+      <label>Süßigkeiten / Snacks</label>
+      <input type="number" id="b-suess" value="0" min="0" oninput="calcBudget()"> <span>€</span>
+    </div>
+    <div class="number-input-row">
+      <label>Freizeit (Kino, Games…)</label>
+      <input type="number" id="b-freizeit" value="0" min="0" oninput="calcBudget()"> <span>€</span>
+    </div>
+    <div class="number-input-row">
+      <label>Schulmaterialien</label>
+      <input type="number" id="b-schule" value="0" min="0" oninput="calcBudget()"> <span>€</span>
+    </div>
+    <div class="number-input-row">
+      <label>Sonstiges</label>
+      <input type="number" id="b-sonst" value="0" min="0" oninput="calcBudget()"> <span>€</span>
+    </div>
+
+    <div class="result-box" id="total-ausgaben" style="background:var(--red-l);color:#991b1b;">Ausgaben gesamt: <strong>0 €</strong></div>
+
+    <div class="calc-section">
+      <div class="calc-row total">
+        <span>Monatliche Ersparnisse</span>
+        <strong id="ersparnisse-val" style="color:var(--green);">0 €</strong>
+      </div>
+    </div>
+    <div id="budget-feedback" class="feedback-msg" style="margin-top:12px;"></div>
+  </div>
+  <div id="nav-bar">
+    <button class="btn btn-secondary" onclick="goTo(2)">← Zurück</button>
+    <button class="btn btn-primary" onclick="goTo(4)">Weiter →</button>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════
+     STATION 5 – Lucas' Finanzplan (AFB III)
+══════════════════════════════════════════ -->
+<section class="station" id="s4">
+  <div class="card">
+    <span class="afb-badge afb3">⬢ AFB III – Urteilen & Planen</span>
+    <h2 class="station-title">🎮 Lucas' Finanzplan</h2>
+    <p class="station-sub">Hilf Lucas, alle Sparziele in 6 Monaten zu erreichen. Plane sein Budget!</p>
+
+    <div class="scenario-box">
+      <h4>👦 Die Situation</h4>
+      Lucas (17 J., Klasse 10) bekommt monatlich <strong>60 € Taschengeld</strong> und verdient <strong>30 € durch Rasenmähen</strong>. Er hat drei Sparziele für die nächsten 6 Monate:
+      <ul style="margin-top:10px;padding-left:20px;line-height:2;">
+        <li>🎮 <strong>Gebrauchte PS5</strong> – 360 €</li>
+        <li>⛺ <strong>Zeltausflug</strong> – 60 €</li>
+        <li>🎁 <strong>Geburtstagsgeschenk Vater</strong> – 90 €</li>
+      </ul>
+    </div>
+
+    <!-- Schritt 1: Einnahmen berechnen -->
+    <h3 style="font-family:'Nunito',sans-serif;font-weight:800;margin-bottom:12px;">Schritt 1: Einnahmen berechnen</h3>
+    <button class="hint-btn" onclick="toggleHint('hint-lucas')">💡 Tipp anzeigen</button>
+    <div class="hint-box" id="hint-lucas">
+      Addiere Taschengeld (60 €) + Rasenmähen (30 €) = monatliche Einnahmen.
+    </div>
+
+    <div class="question-block" id="q4-ein">
+      <p class="q-text">Wie hoch sind Lucas' monatliche Einnahmen?</p>
+      <div class="options">
+        <button class="option-btn" onclick="checkOption(this,'wrong','q4-ein')">60 €</button>
+        <button class="option-btn" onclick="checkOption(this,'correct','q4-ein')">90 €</button>
+        <button class="option-btn" onclick="checkOption(this,'wrong','q4-ein')">30 €</button>
+      </div>
+      <div class="feedback-msg" id="fb-q4-ein"></div>
+    </div>
+
+    <!-- Schritt 2: Sparziele aufstellen -->
+    <h3 style="font-family:'Nunito',sans-serif;font-weight:800;margin:20px 0 12px;">Schritt 2: Sparziele planen</h3>
+    <p style="font-size:.88rem;color:var(--muted);margin-bottom:14px;">Berechne, wie viel Lucas pro Monat für jedes Ziel sparen muss. Alle Ziele sollen in maximal 6 Monaten erreicht werden.</p>
+
+    <table class="data-table" style="margin-bottom:16px;">
+      <thead><tr>
+        <th>Sparziel</th><th>Gesamtbetrag</th><th>Zeitraum</th><th>Sparen pro Monat</th>
+      </tr></thead>
+      <tbody>
+        <tr>
+          <td>🎮 PS5</td>
+          <td>360 €</td>
+          <td>6 Monate</td>
+          <td><input type="number" id="ps5-month" placeholder="?" oninput="checkLucasPlan()"> €</td>
+        </tr>
+        <tr>
+          <td>⛺ Zeltausflug</td>
+          <td>60 €</td>
+          <td>6 Monate</td>
+          <td><input type="number" id="zelt-month" placeholder="?" oninput="checkLucasPlan()"> €</td>
+        </tr>
+        <tr>
+          <td>🎁 Geburtstagsgeschenk</td>
+          <td>90 €</td>
+          <td>6 Monate</td>
+          <td><input type="number" id="geschenk-month" placeholder="?" oninput="checkLucasPlan()"> €</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Schritt 3: Reicht das Geld? -->
+    <div id="lucas-result" style="display:none;">
+      <h3 style="font-family:'Nunito',sans-serif;font-weight:800;margin-bottom:12px;">Schritt 3: Reicht das Geld?</h3>
+      <div class="result-box" id="lucas-spar-box">Sparbetrag gesamt: <strong id="lucas-spar-sum">–</strong></div>
+      <div class="result-box" style="margin-top:10px;" id="lucas-uebrig-box">Monatlich übrig: <strong id="lucas-uebrig">–</strong></div>
+      <div id="lucas-urteil" class="feedback-msg" style="margin-top:12px;"></div>
+
+      <!-- AFB III Frage -->
+      <div class="question-block" style="margin-top:24px;" id="q4-urteil">
+        <p class="q-text">Was kannst du über Lucas' Plan urteilen? Wähle die beste Aussage.</p>
+        <div class="options">
+          <button class="option-btn" onclick="checkOption(this,'wrong','q4-urteil')">Lucas kann sich alles leisten, weil er arbeitet.</button>
+          <button class="option-btn" onclick="checkOption(this,'correct','q4-urteil')">Der Plan ist realistisch – Lucas erreicht alle Ziele und hat noch etwas übrig.</button>
+          <button class="option-btn" onclick="checkOption(this,'wrong','q4-urteil')">Lucas muss alle Ziele aufgeben, weil sein Geld nicht reicht.</button>
+        </div>
+        <div class="feedback-msg" id="fb-q4-urteil"></div>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="resetLucas()">↺ Zurücksetzen</button>
+      <button class="btn btn-accent" onclick="checkLucasFull()">✓ Plan prüfen</button>
+    </div>
+  </div>
+  <div id="nav-bar">
+    <button class="btn btn-secondary" onclick="goTo(3)">← Zurück</button>
+    <button class="btn btn-primary" onclick="showSuccess()">🏁 Abschluss</button>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════
+     SUCCESS SCREEN
+══════════════════════════════════════════ -->
+<section class="station" id="s5">
+  <div id="success-screen" style="display:block;">
+    <div class="trophy">🏆</div>
+    <h2>Super gemacht!</h2>
+    <p>Du hast alle fünf Stationen abgeschlossen und weißt jetzt, wie Einnahmen, Ausgaben und Budgetplanung funktionieren.</p>
+    <div class="card" style="text-align:left;max-width:480px;margin:0 auto 24px;">
+      <h3 style="font-family:'Nunito',sans-serif;font-weight:800;margin-bottom:12px;">🔑 Das habe ich gelernt:</h3>
+      <ul style="padding-left:20px;line-height:2.1;font-size:.92rem;">
+        <li><strong>Einnahmen</strong> = Geld, das ich bekomme</li>
+        <li><strong>Ausgaben</strong> = Geld, das ich ausgebe</li>
+        <li><strong>Budget</strong> = Plan über Einnahmen und Ausgaben</li>
+        <li><strong>Sparziel</strong> = Betrag, den ich gezielt zurücklege</li>
+        <li>Einnahmen − Ausgaben = <strong>Ersparnisse</strong></li>
+      </ul>
+    </div>
+    <button class="btn btn-primary" onclick="goTo(0)" style="font-size:1rem;padding:14px 32px;">↺ Nochmal spielen</button>
+  </div>
+</section>
+
+</main>
+
+<!-- ══════════════════════════════════════════
+     JAVASCRIPT
+══════════════════════════════════════════ -->
+<script>
+// ── Navigation ────────────────────────────
+const TOTAL = 5;
+let current = 0;
+const completed = new Array(TOTAL).fill(false);
+
+function goTo(idx) {
+  document.querySelectorAll('.station').forEach((s,i) => s.classList.toggle('active', i === idx));
+  document.querySelectorAll('.tab-btn').forEach((b,i) => b.classList.toggle('active', i === idx));
+  current = idx;
+  updateProgress();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function updateProgress() {
+  const pct = ((current + 1) / (TOTAL + 1)) * 100;
+  document.getElementById('progress-bar').style.width = pct + '%';
+  document.getElementById('step-label').textContent =
+    current < TOTAL ? `Station ${current+1} von ${TOTAL}` : 'Abgeschlossen!';
+}
+
+function showSuccess() { goTo(5); }
+
+// ── Quiz: single option check ──────────────
+function checkOption(btn, result, blockId) {
+  const block = document.getElementById(blockId);
+  if (!block) return;
+  const btns = block.querySelectorAll('.option-btn');
+  btns.forEach(b => { b.disabled = true; });
+  const fb = document.getElementById('fb-' + blockId);
+  if (result === 'correct') {
+    btn.classList.add('correct');
+    fb.textContent = '✅ Richtig!';
+    fb.className = 'feedback-msg show ok';
+  } else {
+    btn.classList.add('wrong');
+    fb.textContent = '❌ Leider falsch – schau nochmal in die Begriffe.';
+    fb.className = 'feedback-msg show err';
+    // Highlight correct
+    btns.forEach(b => {
+      if (b.getAttribute('onclick') && b.getAttribute('onclick').includes("'correct'")) {
+        b.classList.add('correct');
+      }
+    });
+  }
+}
+
+// ── Hint toggle ────────────────────────────
+function toggleHint(id) {
+  const box = document.getElementById(id);
+  box.classList.toggle('show');
+}
+
+// ── Station 2: Drag & Click Sort ──────────
+const chipData = {};
+
+function initChips() {
+  document.querySelectorAll('.drag-chip').forEach(chip => {
+    chipData[chip.id] = { placed: null };
+    chip.addEventListener('dragstart', e => {
+      e.dataTransfer.setData('chipId', chip.id);
+    });
+  });
+}
+initChips();
+
+function chipClick(id) {
+  const chip = document.getElementById(id);
+  const cat = chip.dataset.cat;
+  if (chipData[id].placed) return; // already placed
+  const zone = document.getElementById('zone-' + cat);
+  zone.appendChild(chip);
+  chipData[id].placed = cat;
+}
+
+function dropChip(event, zoneCat) {
+  const id = event.dataTransfer.getData('chipId');
+  const chip = document.getElementById(id);
+  const zone = document.getElementById('zone-' + zoneCat);
+  zone.appendChild(chip);
+  chipData[id].placed = zoneCat;
+}
+
+function checkSort() {
+  let correct = 0, total = 0;
+  document.querySelectorAll('.drag-chip').forEach(chip => {
+    const id = chip.id;
+    const expected = chip.dataset.cat;
+    const placed   = chipData[id].placed;
+    if (!placed) return;
+    total++;
+    if (placed === expected) { chip.classList.add('correct'); chip.classList.remove('wrong'); correct++; }
+    else                      { chip.classList.add('wrong');   chip.classList.remove('correct'); }
+  });
+  const fb = document.getElementById('fb-sort');
+  if (correct === 8) {
+    fb.textContent = '🎉 Perfekt! Alle 8 Karten richtig sortiert!';
+    fb.className = 'feedback-msg show ok';
+  } else {
+    fb.textContent = `${correct} von ${total} platziert richtig. Rot markierte nochmal prüfen!`;
+    fb.className = 'feedback-msg show err';
+  }
+}
+
+function resetSort() {
+  const pool = document.getElementById('chips-pool');
+  document.querySelectorAll('.drag-chip').forEach(chip => {
+    chip.classList.remove('correct','wrong');
+    chipData[chip.id].placed = null;
+    pool.appendChild(chip);
+  });
+  const fb = document.getElementById('fb-sort');
+  fb.className = 'feedback-msg';
+}
+
+// ── Station 4: Mein Budget ─────────────────
+function calcBudget() {
+  const tg  = +document.getElementById('b-taschengeld').value || 0;
+  const ge  = +document.getElementById('b-geschenke').value   || 0;
+  const jo  = +document.getElementById('b-job').value          || 0;
+  const su  = +document.getElementById('b-suess').value        || 0;
+  const fr  = +document.getElementById('b-freizeit').value     || 0;
+  const sc  = +document.getElementById('b-schule').value       || 0;
+  const so  = +document.getElementById('b-sonst').value        || 0;
+
+  const ein = tg + ge + jo;
+  const aus = su + fr + sc + so;
+  const ers = ein - aus;
+
+  document.getElementById('total-einnahmen').innerHTML =
+    `Einnahmen gesamt: <strong>${ein} €</strong>`;
+  document.getElementById('total-ausgaben').innerHTML =
+    `Ausgaben gesamt: <strong>${aus} €</strong>`;
+
+  const ev = document.getElementById('ersparnisse-val');
+  ev.textContent = ers + ' €';
+  ev.style.color = ers >= 0 ? 'var(--green)' : 'var(--red)';
+
+  const fb = document.getElementById('budget-feedback');
+  if (ein === 0) { fb.className = 'feedback-msg'; return; }
+  if (ers < 0) {
+    fb.textContent = '⚠️ Vorsicht: Deine Ausgaben sind höher als deine Einnahmen!';
+    fb.className = 'feedback-msg show err';
+  } else if (ers === 0) {
+    fb.textContent = '😐 Dein Budget ist ausgeglichen – du sparst aber nichts.';
+    fb.className = 'feedback-msg show err';
+  } else {
+    fb.textContent = `✅ Super! Du kannst ${ers} € im Monat sparen.`;
+    fb.className = 'feedback-msg show ok';
+  }
+}
+
+// ── Station 5: Lucas Plan ─────────────────
+function checkLucasPlan() {
+  const ps5  = +document.getElementById('ps5-month').value  || 0;
+  const zelt = +document.getElementById('zelt-month').value || 0;
+  const ges  = +document.getElementById('geschenk-month').value || 0;
+  if (ps5 === 0 && zelt === 0 && ges === 0) return;
+  document.getElementById('lucas-result').style.display = 'block';
+
+  const sum = ps5 + zelt + ges;
+  const uebrig = 90 - sum;
+
+  document.getElementById('lucas-spar-sum').textContent = sum + ' € / Monat';
+  document.getElementById('lucas-uebrig').textContent = uebrig + ' € / Monat';
+
+  const urteil = document.getElementById('lucas-urteil');
+  if (uebrig < 0) {
+    urteil.textContent = '⚠️ Zu viel! Lucas spart mehr als er einnimmt.';
+    urteil.className = 'feedback-msg show err';
+    document.getElementById('lucas-uebrig-box').className = 'result-box red';
+  } else if (uebrig >= 0) {
+    urteil.textContent = `✅ Passt! Lucas hat noch ${uebrig} € übrig.`;
+    urteil.className = 'feedback-msg show ok';
+    document.getElementById('lucas-uebrig-box').className = 'result-box green';
+  }
+}
+
+function checkLucasFull() {
+  const ps5  = +document.getElementById('ps5-month').value  || 0;
+  const zelt = +document.getElementById('zelt-month').value || 0;
+  const ges  = +document.getElementById('geschenk-month').value || 0;
+
+  // Correct values: 60, 10, 15
+  const ps5ok  = ps5  === 60;
+  const zeltok = zelt === 10;
+  const gesok  = ges  === 15;
+
+  checkLucasPlan();
+
+  const urteil = document.getElementById('lucas-urteil');
+  if (ps5ok && zeltok && gesok) {
+    urteil.textContent = '🎉 Perfekt! PS5: 60 €, Zelt: 10 €, Geschenk: 15 € – alle Werte stimmen!';
+    urteil.className = 'feedback-msg show ok';
+    // unlock AFB III question
+    document.getElementById('q4-urteil').style.display = 'block';
+  } else {
+    let hints = [];
+    if (!ps5ok)  hints.push(`PS5: 360 € ÷ 6 Monate = ?`);
+    if (!zeltok) hints.push(`Zeltausflug: 60 € ÷ 6 Monate = ?`);
+    if (!gesok)  hints.push(`Geschenk: 90 € ÷ 6 Monate = ?`);
+    urteil.textContent = 'Noch nicht ganz: ' + hints.join(' | ');
+    urteil.className = 'feedback-msg show err';
+  }
+}
+
+function resetLucas() {
+  ['ps5-month','zelt-month','geschenk-month'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('lucas-result').style.display = 'none';
+  document.getElementById('lucas-urteil').className = 'feedback-msg';
+}
+
+// initialise
+updateProgress();
+</script>
+</body>
+</html>
